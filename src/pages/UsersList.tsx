@@ -2,6 +2,7 @@ import { useUsers } from '@/features/users/api/users.queries';
 import { DataTable } from '@/features/users/components/DataTable';
 import { createColumns } from '@/features/users/components/Columns';
 import { BioDialog } from '@/features/users/components/BioDialog';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useState } from 'react';
 import type { User } from '@/features/users/schemas/users.schema';
 
@@ -21,11 +22,14 @@ export function UsersList() {
 
   return (
     <div className="container mx-auto py-8 px-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Mock API Users</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage and view all users fetched from the mock API.
-        </p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Mock API Users</h1>
+          <p className="text-muted-foreground mt-2">
+            Manage and view all users fetched from the mock API.
+          </p>
+        </div>
+        <ThemeToggle />
       </div>
       <DataTable
         columns={columns}
