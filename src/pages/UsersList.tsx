@@ -2,7 +2,7 @@ import { useUsers } from '@/features/users/api/users.queries';
 import { DataTable } from '@/features/users/components/DataTable';
 import { createColumns } from '@/features/users/components/Columns';
 import { BioDialog } from '@/features/users/components/BioDialog';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { useState } from 'react';
 import type { User } from '@/features/users/schemas/users.schema';
 
