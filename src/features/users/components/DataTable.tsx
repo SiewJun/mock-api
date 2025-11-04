@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/table';
 
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { X, ChevronDown, Calendar as CalendarIcon } from 'lucide-react';
@@ -290,19 +291,15 @@ export function DataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  <div className="flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="mb-2 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto"></div>
-                      <p className="text-muted-foreground">Loading users...</p>
-                    </div>
-                  </div>
-                </TableCell>
-              </TableRow>
+              Array.from({ length: table.getState().pagination.pageSize }).map((_, index) => (
+                <TableRow key={index}>
+                  {columns.map((_, cellIndex) => (
+                    <TableCell key={cellIndex}>
+                      <Skeleton className="h-6 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : isError ? (
               <TableRow>
                 <TableCell
