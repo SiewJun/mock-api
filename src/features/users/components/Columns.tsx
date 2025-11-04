@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface ColumnsProps {
   onViewBio: (user: User) => void;
@@ -198,7 +199,10 @@ export const createColumns = ({
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(user.id)}
+              onClick={async () => {
+                await navigator.clipboard.writeText(user.id);
+                toast.success('User ID copied to clipboard');
+              }}
             >
               Copy user ID
             </DropdownMenuItem>
