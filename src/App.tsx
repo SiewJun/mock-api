@@ -1,7 +1,9 @@
+import { UsersList } from '@/pages/UsersList';
+
 function App() {
   return (
     <>
-      <p className="text-primary">test</p>
+      <UsersList />
     </>
   );
 }
