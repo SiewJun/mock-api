@@ -22,7 +22,6 @@ export function Header({ title, description, actions }: HeaderProps) {
             </div>
 
             <div className="flex items-center gap-4">
-              {actions}
               <ThemeToggle />
             </div>
           </div>
@@ -42,6 +41,7 @@ export function Header({ title, description, actions }: HeaderProps) {
                   <p className="text-muted-foreground">{description}</p>
                 )}
               </div>
+              {actions && <div className="flex items-center gap-2">{actions}</div>}
             </div>
           </div>
         </>

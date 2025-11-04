@@ -1,4 +1,4 @@
-import { useUsers } from '@/features/users/api/users.queries';
+import { useUsers } from '@/features/users/api/users.hooks';
 import { DataTable } from '@/features/users/components/DataTable';
 import { createColumns } from '@/features/users/components/Columns';
 import { BioDialog } from '@/features/users/components/BioDialog';
