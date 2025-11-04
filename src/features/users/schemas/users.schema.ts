@@ -5,7 +5,7 @@ export const userResponseSchema = z.object({
   name: z.string(),
   phoneNumber: z.string(),
   email: z.email(),
-  avatar: z.url().optional(),
+  avatar: z.url().optional().or(z.literal('')),
   active: z.boolean(),
   role: z.string(),
   bio: z.string().optional(),
