@@ -28,7 +28,7 @@ export function Header({ title, description, actions }: HeaderProps) {
         </div>
       </header>
 
-      {(title || description) && (
+      {(title || description || actions) && (
         <>
           <Separator />
           <div className="container mx-auto px-6 py-6">
