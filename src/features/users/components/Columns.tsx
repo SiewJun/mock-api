@@ -18,10 +18,12 @@ import { toast } from 'sonner';
 
 interface ColumnsProps {
   onViewBio: (user: User) => void;
+  onEditUser: (user: User) => void;
 }
 
 export const createColumns = ({
   onViewBio,
+  onEditUser,
 }: ColumnsProps): ColumnDef<User>[] => [
   {
     id: 'select',
@@ -210,7 +212,9 @@ export const createColumns = ({
             <DropdownMenuItem onClick={() => onViewBio(user)}>
               View full bio
             </DropdownMenuItem>
-            <DropdownMenuItem>Edit user</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onEditUser(user)}>
+              Edit user
+            </DropdownMenuItem>
             <DropdownMenuItem className="text-destructive">
               Delete user
             </DropdownMenuItem>

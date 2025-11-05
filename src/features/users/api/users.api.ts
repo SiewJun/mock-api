@@ -22,3 +22,19 @@ export async function createUser(data: UserFormData): Promise<User> {
 
   return validatedData;
 }
+
+export async function getUserById(id: string): Promise<User> {
+  const response = await mockApiClient.get(USERS_ENDPOINTS.getById(id));
+
+  const validatedData = userResponseSchema.parse(response.data);
+
+  return validatedData;
+}
+
+export async function updateUser({ id, data }: { id: string; data: UserFormData }): Promise<User> {
+  const response = await mockApiClient.put(USERS_ENDPOINTS.update(id), data);
+
+  const validatedData = userResponseSchema.parse(response.data);
+
+  return validatedData;
+}

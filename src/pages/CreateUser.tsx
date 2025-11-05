@@ -21,7 +21,7 @@ export function CreateUser() {
       />
       <div className="container mx-auto py-8 px-6 max-w-2xl">
         <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <UserForm />
+          <UserForm mode="create" />
         </div>
       </div>
     </>

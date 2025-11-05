@@ -124,134 +124,140 @@ export function DataTable<TData, TValue>({
             className="w-full md:max-w-sm"
           />
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full md:w-auto">
-                Role: {roleFilter || 'All'}
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuLabel>Filter by Role</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem
-                checked={!roleFilter}
-                onCheckedChange={() =>
-                  table.getColumn('role')?.setFilterValue('')
-                }
-              >
-                All Roles
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={roleFilter === 'Admin'}
-                onCheckedChange={() =>
-                  table.getColumn('role')?.setFilterValue('Admin')
-                }
-              >
-                Admin
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={roleFilter === 'User'}
-                onCheckedChange={() =>
-                  table.getColumn('role')?.setFilterValue('User')
-                }
-              >
-                User
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={roleFilter === 'Guest'}
-                onCheckedChange={() =>
-                  table.getColumn('role')?.setFilterValue('Guest')
-                }
-              >
-                Guest
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full md:w-auto">
-                Status:{' '}
-                {statusFilter === 'true'
-                  ? 'Active'
-                  : statusFilter === 'false'
-                  ? 'Inactive'
-                  : 'All'}
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem
-                checked={!statusFilter}
-                onCheckedChange={() =>
-                  table.getColumn('active')?.setFilterValue('')
-                }
-              >
-                All Status
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={statusFilter === 'true'}
-                onCheckedChange={() =>
-                  table.getColumn('active')?.setFilterValue('true')
-                }
-              >
-                Active
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={statusFilter === 'false'}
-                onCheckedChange={() =>
-                  table.getColumn('active')?.setFilterValue('false')
-                }
-              >
-                Inactive
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  'w-full md:w-auto justify-start text-left font-normal',
-                  !dateFilter && 'text-muted-foreground'
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateFilter ? format(dateFilter, 'PPP') : 'Pick a date'}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dateFilter}
-                onSelect={(date) => {
-                  setDateFilter(date);
-                  if (date) {
-                    table.getColumn('createdAt')?.setFilterValue(date);
-                  } else {
-                    table.getColumn('createdAt')?.setFilterValue('');
+          <div className="grid grid-cols-2 gap-2 md:flex md:gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full md:w-auto">
+                  Role: {roleFilter || 'All'}
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuLabel>Filter by Role</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuCheckboxItem
+                  checked={!roleFilter}
+                  onCheckedChange={() =>
+                    table.getColumn('role')?.setFilterValue('')
                   }
-                }}
-              />
-            </PopoverContent>
-          </Popover>
+                >
+                  All Roles
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={roleFilter === 'Admin'}
+                  onCheckedChange={() =>
+                    table.getColumn('role')?.setFilterValue('Admin')
+                  }
+                >
+                  Admin
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={roleFilter === 'User'}
+                  onCheckedChange={() =>
+                    table.getColumn('role')?.setFilterValue('User')
+                  }
+                >
+                  User
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={roleFilter === 'Guest'}
+                  onCheckedChange={() =>
+                    table.getColumn('role')?.setFilterValue('Guest')
+                  }
+                >
+                  Guest
+                </DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-          {hasActiveFilters && (
-            <Button
-              variant="secondary"
-              onClick={clearFilters}
-              className="w-full md:w-auto"
-            >
-              Clear
-              <X className="ml-2 h-4 w-4" />
-            </Button>
-          )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full md:w-auto">
+                  Status:{' '}
+                  {statusFilter === 'true'
+                    ? 'Active'
+                    : statusFilter === 'false'
+                    ? 'Inactive'
+                    : 'All'}
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuCheckboxItem
+                  checked={!statusFilter}
+                  onCheckedChange={() =>
+                    table.getColumn('active')?.setFilterValue('')
+                  }
+                >
+                  All Status
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={statusFilter === 'true'}
+                  onCheckedChange={() =>
+                    table.getColumn('active')?.setFilterValue('true')
+                  }
+                >
+                  Active
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={statusFilter === 'false'}
+                  onCheckedChange={() =>
+                    table.getColumn('active')?.setFilterValue('false')
+                  }
+                >
+                  Inactive
+                </DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    'w-full md:w-auto justify-start text-left font-normal',
+                    !dateFilter && 'text-muted-foreground'
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateFilter
+                    ? format(dateFilter, 'MMM dd, yyyy')
+                    : 'Pick a date'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateFilter}
+                  onSelect={(date) => {
+                    setDateFilter(date);
+                    if (date) {
+                      table.getColumn('createdAt')?.setFilterValue(date);
+                    } else {
+                      table.getColumn('createdAt')?.setFilterValue('');
+                    }
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+
+            {hasActiveFilters && (
+              <Button
+                variant="secondary"
+                onClick={clearFilters}
+                className="w-full md:w-auto"
+              >
+                Clear
+                <X className="ml-2 h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
+      </div>
 
+      <div className="min-h-10 flex items-center justify-end">
         {table.getFilteredSelectedRowModel().rows.length > 0 && (
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <span className="text-sm text-muted-foreground">
@@ -291,15 +297,17 @@ export function DataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              Array.from({ length: table.getState().pagination.pageSize }).map((_, index) => (
-                <TableRow key={index}>
-                  {columns.map((_, cellIndex) => (
-                    <TableCell key={cellIndex}>
-                      <Skeleton className="h-8 w-full" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              Array.from({ length: table.getState().pagination.pageSize }).map(
+                (_, index) => (
+                  <TableRow key={index}>
+                    {columns.map((_, cellIndex) => (
+                      <TableCell key={cellIndex}>
+                        <Skeleton className="h-8 w-full" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )
+              )
             ) : isError ? (
               <TableRow>
                 <TableCell

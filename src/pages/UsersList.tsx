@@ -5,7 +5,7 @@ import { BioDialog } from '@/features/users/components/BioDialog';
 import { Header } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import type { User } from '@/features/users/schemas/users.schema';
 
@@ -13,6 +13,7 @@ export function UsersList() {
   const { data: users = [], isLoading, isError, error } = useUsers();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isBioDialogOpen, setIsBioDialogOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleViewBio = (user: User) => {
     setSelectedUser(user);
@@ -21,6 +22,7 @@ export function UsersList() {
 
   const columns = createColumns({
     onViewBio: handleViewBio,
+    onEditUser: (user) => navigate(`/users/${user.id}`),
   });
 
   return (

@@ -1,12 +1,15 @@
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import { isAxiosError } from 'axios';
 import {
   userFormSchema,
+  type User,
   type UserFormData,
 } from '@/features/users/schemas/users.schema';
-import { useCreateUser } from '@/features/users/api/users.hooks';
+import { useCreateUser, useUpdateUser } from '@/features/users/api/users.hooks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,19 +30,40 @@ import {
 } from '@/components/ui/field';
 import { Separator } from '@/components/ui/separator';
 
-export function UserForm() {
+type UserFormMode = 'create' | 'edit';
+
+interface UserFormProps {
+  mode: UserFormMode;
+  initialData?: User;
+  userId?: string;
+}
+
+function normalizeRole(role?: string): 'Admin' | 'User' | 'Guest' {
+  if (role === 'Admin' || role === 'User' || role === 'Guest') {
+    return role;
+  }
+  return 'User';
+}
+
+export function UserForm({ mode, initialData, userId }: UserFormProps) {
   const navigate = useNavigate();
   const createUserMutation = useCreateUser();
+  const updateUserMutation = useUpdateUser();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    setValue,
-    watch,
-  } = useForm<UserFormData>({
-    resolver: zodResolver(userFormSchema),
-    defaultValues: {
+  const defaultValues = useMemo<UserFormData>(() => {
+    if (mode === 'edit' && initialData) {
+      return {
+        name: initialData.name,
+        email: initialData.email,
+        phoneNumber: initialData.phoneNumber,
+        active: initialData.active,
+        role: normalizeRole(initialData.role),
+        avatar: initialData.avatar ?? '',
+        bio: initialData.bio ?? '',
+      };
+    }
+
+    return {
       name: '',
       email: '',
       phoneNumber: '',
@@ -47,12 +71,52 @@ export function UserForm() {
       role: 'User',
       avatar: '',
       bio: '',
-    },
+    };
+  }, [initialData, mode]);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setValue,
+    watch,
+    reset,
+  } = useForm<UserFormData>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues,
   });
+
+  useEffect(() => {
+    reset(defaultValues);
+  }, [defaultValues, reset]);
+
+  const isMutating =
+    createUserMutation.isPending || updateUserMutation.isPending;
+  const isFormSubmitting = isSubmitting || isMutating;
 
   const onSubmit = async (data: UserFormData) => {
     navigate('/');
-    await createUserMutation.mutateAsync(data);
+
+    if (mode === 'edit' && !userId) {
+      return;
+    }
+
+    try {
+      if (mode === 'create') {
+        await createUserMutation.mutateAsync(data);
+      } else if (userId) {
+        await updateUserMutation.mutateAsync({ id: userId, data });
+      }
+      navigate('/');
+    } catch (error) {
+      if (
+        mode === 'edit' &&
+        isAxiosError(error) &&
+        error.response?.status === 404
+      ) {
+        navigate('/', { replace: true });
+      }
+    }
   };
 
   const handleCancel = () => {
@@ -60,6 +124,10 @@ export function UserForm() {
   };
 
   const phoneValue = watch('phoneNumber');
+  const roleValue = watch('role') ?? 'User';
+  const isActive = watch('active');
+  const bioValue = watch('bio');
+  const remainingBioCharacters = 500 - (bioValue?.length || 0);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -73,7 +141,7 @@ export function UserForm() {
               id="name"
               placeholder="Enter user's full name"
               {...register('name')}
-              disabled={isSubmitting}
+              disabled={isFormSubmitting}
               aria-invalid={!!errors.name}
             />
             <FieldError errors={[errors.name]} />
@@ -90,7 +158,7 @@ export function UserForm() {
               type="email"
               placeholder="Enter email address"
               {...register('email')}
-              disabled={isSubmitting}
+              disabled={isFormSubmitting}
               aria-invalid={!!errors.email}
             />
             <FieldError errors={[errors.email]} />
@@ -107,7 +175,7 @@ export function UserForm() {
               placeholder="Enter phone number"
               value={phoneValue}
               onChange={(value) => setValue('phoneNumber', value || '')}
-              disabled={isSubmitting}
+              disabled={isFormSubmitting}
               defaultCountry="MY"
               international
               aria-invalid={!!errors.phoneNumber}
@@ -126,8 +194,8 @@ export function UserForm() {
               onValueChange={(value) =>
                 setValue('role', value as 'Admin' | 'User' | 'Guest')
               }
-              defaultValue="User"
-              disabled={isSubmitting}
+              value={roleValue}
+              disabled={isFormSubmitting}
             >
               <SelectTrigger id="role" aria-invalid={!!errors.role}>
                 <SelectValue placeholder="Select a role" />
@@ -148,11 +216,9 @@ export function UserForm() {
           </FieldLabel>
           <FieldContent>
             <Select
-              onValueChange={(value) =>
-                setValue('active', value === 'true' ? true : false)
-              }
-              defaultValue="true"
-              disabled={isSubmitting}
+              onValueChange={(value) => setValue('active', value === 'true')}
+              value={isActive ? 'true' : 'false'}
+              disabled={isFormSubmitting}
             >
               <SelectTrigger id="active" aria-invalid={!!errors.active}>
                 <SelectValue placeholder="Select status" />
@@ -179,7 +245,7 @@ export function UserForm() {
               type="url"
               placeholder="https://example.com/avatar.jpg"
               {...register('avatar')}
-              disabled={isSubmitting}
+              disabled={isFormSubmitting}
               aria-invalid={!!errors.avatar}
             />
             <FieldDescription>
@@ -198,12 +264,11 @@ export function UserForm() {
               className="min-h-[120px]"
               maxLength={500}
               {...register('bio')}
-              disabled={isSubmitting}
+              disabled={isFormSubmitting}
               aria-invalid={!!errors.bio}
             />
             <FieldDescription>
-              Optional: 500 characters max, {500 - (watch('bio')?.length || 0)}
-              left
+              Optional: 500 characters max, {remainingBioCharacters} left
             </FieldDescription>
             <FieldError errors={[errors.bio]} />
           </FieldContent>
@@ -217,13 +282,15 @@ export function UserForm() {
           type="button"
           variant="outline"
           onClick={handleCancel}
-          disabled={isSubmitting}
+          disabled={isFormSubmitting}
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Create User
+        <Button type="submit" disabled={isFormSubmitting}>
+          {isFormSubmitting && (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          )}
+          {mode === 'create' ? 'Create User' : 'Save Changes'}
         </Button>
       </div>
     </form>
