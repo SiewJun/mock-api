@@ -51,8 +51,8 @@ export function UserForm() {
   });
 
   const onSubmit = async (data: UserFormData) => {
-    await createUserMutation.mutateAsync(data);
     navigate('/');
+    await createUserMutation.mutateAsync(data);
   };
 
   const handleCancel = () => {
@@ -202,7 +202,8 @@ export function UserForm() {
               aria-invalid={!!errors.bio}
             />
             <FieldDescription>
-              Optional: 500 characters max, {500 - (watch('bio')?.length || 0)} left
+              Optional: 500 characters max, {500 - (watch('bio')?.length || 0)}
+              left
             </FieldDescription>
             <FieldError errors={[errors.bio]} />
           </FieldContent>
