@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -78,8 +78,7 @@ export function UserForm({ mode, initialData, userId }: UserFormProps) {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    setValue,
-    watch,
+    control,
     reset,
   } = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
@@ -123,12 +122,6 @@ export function UserForm({ mode, initialData, userId }: UserFormProps) {
     navigate('/');
   };
 
-  const phoneValue = watch('phoneNumber');
-  const roleValue = watch('role') ?? 'User';
-  const isActive = watch('active');
-  const bioValue = watch('bio');
-  const remainingBioCharacters = 500 - (bioValue?.length || 0);
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="space-y-6">
@@ -170,15 +163,21 @@ export function UserForm({ mode, initialData, userId }: UserFormProps) {
             Phone Number <span className="text-destructive">*</span>
           </FieldLabel>
           <FieldContent>
-            <PhoneInput
-              id="phoneNumber"
-              placeholder="Enter phone number"
-              value={phoneValue}
-              onChange={(value) => setValue('phoneNumber', value || '')}
-              disabled={isFormSubmitting}
-              defaultCountry="MY"
-              international
-              aria-invalid={!!errors.phoneNumber}
+            <Controller
+              name="phoneNumber"
+              control={control}
+              render={({ field }) => (
+                <PhoneInput
+                  id="phoneNumber"
+                  placeholder="Enter phone number"
+                  value={field.value}
+                  onChange={(value) => field.onChange(value || '')}
+                  disabled={isFormSubmitting}
+                  defaultCountry="MY"
+                  international
+                  aria-invalid={!!errors.phoneNumber}
+                />
+              )}
             />
             <FieldDescription>Please include the country code</FieldDescription>
             <FieldError errors={[errors.phoneNumber]} />
@@ -190,22 +189,26 @@ export function UserForm({ mode, initialData, userId }: UserFormProps) {
             Role <span className="text-destructive">*</span>
           </FieldLabel>
           <FieldContent>
-            <Select
-              onValueChange={(value) =>
-                setValue('role', value as 'Admin' | 'User' | 'Guest')
-              }
-              value={roleValue}
-              disabled={isFormSubmitting}
-            >
-              <SelectTrigger id="role" aria-invalid={!!errors.role}>
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Admin">Admin</SelectItem>
-                <SelectItem value="User">User</SelectItem>
-                <SelectItem value="Guest">Guest</SelectItem>
-              </SelectContent>
-            </Select>
+            <Controller
+              name="role"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  disabled={isFormSubmitting}
+                >
+                  <SelectTrigger id="role" aria-invalid={!!errors.role}>
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Admin">Admin</SelectItem>
+                    <SelectItem value="User">User</SelectItem>
+                    <SelectItem value="Guest">Guest</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
             <FieldError errors={[errors.role]} />
           </FieldContent>
         </Field>
@@ -215,19 +218,25 @@ export function UserForm({ mode, initialData, userId }: UserFormProps) {
             Status <span className="text-destructive">*</span>
           </FieldLabel>
           <FieldContent>
-            <Select
-              onValueChange={(value) => setValue('active', value === 'true')}
-              value={isActive ? 'true' : 'false'}
-              disabled={isFormSubmitting}
-            >
-              <SelectTrigger id="active" aria-invalid={!!errors.active}>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="true">Active</SelectItem>
-                <SelectItem value="false">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
+            <Controller
+              name="active"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  onValueChange={(value) => field.onChange(value === 'true')}
+                  value={field.value ? 'true' : 'false'}
+                  disabled={isFormSubmitting}
+                >
+                  <SelectTrigger id="active" aria-invalid={!!errors.active}>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="true">Active</SelectItem>
+                    <SelectItem value="false">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
             <FieldDescription>
               Mark this user's status in the system
             </FieldDescription>
@@ -268,7 +277,7 @@ export function UserForm({ mode, initialData, userId }: UserFormProps) {
               aria-invalid={!!errors.bio}
             />
             <FieldDescription>
-              Optional: 500 characters max, {remainingBioCharacters} left
+              Optional: 500 characters max
             </FieldDescription>
             <FieldError errors={[errors.bio]} />
           </FieldContent>

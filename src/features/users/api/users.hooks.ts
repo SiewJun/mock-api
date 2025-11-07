@@ -10,6 +10,7 @@ import {
   createUser,
   getUserById,
   updateUser,
+  deleteUser,
 } from '@/features/users/api/users.api';
 import type { User, UserFormData } from '@/features/users/schemas/users.schema';
 import { toast } from 'sonner';
@@ -238,6 +239,86 @@ export function useUpdateUser(
       queryClient.invalidateQueries({
         queryKey: usersKeys.detail(variables.id),
       });
+    },
+    ...options,
+  });
+}
+
+export function useDeleteUser(
+  options?: Omit<
+    UseMutationOptions<
+      void,
+      ApiError,
+      { id: string },
+      {
+        previousUsers: User[] | undefined;
+        previousUser: User | undefined;
+        toastId: string | number;
+      }
+    >,
+    'mutationFn'
+  >
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    void,
+    ApiError,
+    { id: string },
+    {
+      previousUsers: User[] | undefined;
+      previousUser: User | undefined;
+      toastId: string | number;
+    }
+  >({
+    mutationFn: ({ id }) => deleteUser(id),
+    onMutate: async ({ id }) => {
+      const toastId = toast.loading('Deleting user...');
+
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: usersKeys.list() }),
+        queryClient.cancelQueries({ queryKey: usersKeys.detail(id) }),
+      ]);
+
+      const previousUsers = queryClient.getQueryData<User[]>(usersKeys.list());
+      const previousUser = queryClient.getQueryData<User>(usersKeys.detail(id));
+
+      queryClient.setQueryData<User[]>(usersKeys.list(), (old = []) =>
+        old.filter((user) => user.id !== id)
+      );
+
+      queryClient.setQueryData<User | undefined>(usersKeys.detail(id), undefined);
+
+      return { previousUsers, previousUser, toastId };
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousUsers) {
+        queryClient.setQueryData(usersKeys.list(), context.previousUsers);
+      }
+
+      if (context?.previousUser) {
+        queryClient.setQueryData(usersKeys.detail(variables.id), context.previousUser);
+      }
+
+      const description =
+        error.response?.data?.message ||
+        error.message ||
+        'An error occurred while deleting the user';
+
+      toast.error('Failed to delete user', {
+        description,
+        id: context?.toastId,
+      });
+    },
+    onSuccess: (_data, _variables, context) => {
+      toast.success('User deleted successfully', {
+        description: 'The user has been removed from the system.',
+        id: context?.toastId,
+      });
+    },
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({ queryKey: usersKeys.list() });
+      queryClient.invalidateQueries({ queryKey: usersKeys.detail(variables.id) });
     },
     ...options,
   });

@@ -22,7 +22,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X, ChevronDown, Calendar as CalendarIcon } from 'lucide-react';
 import {
   DropdownMenu,
@@ -54,6 +54,10 @@ interface DataTableProps<TData, TValue> {
   isLoading?: boolean;
   isError?: boolean;
   error?: Error | null;
+  onSelectionChange?: (selectedRows: TData[]) => void;
+  onBulkDelete?: () => void;
+  isBulkDeleting?: boolean;
+  clearSelectionSignal?: number;
 }
 
 export function DataTable<TData, TValue>({
@@ -62,6 +66,10 @@ export function DataTable<TData, TValue>({
   isLoading = false,
   isError = false,
   error = null,
+  onSelectionChange,
+  onBulkDelete,
+  isBulkDeleting = false,
+  clearSelectionSignal,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -96,6 +104,26 @@ export function DataTable<TData, TValue>({
       globalFilter,
     },
   });
+
+  const selectedRowSelection = table.getState().rowSelection;
+
+  useEffect(() => {
+    if (!onSelectionChange) return;
+
+    const selectedRows = table
+      .getFilteredSelectedRowModel()
+      .rows.map((row) => row.original as TData);
+
+    onSelectionChange(selectedRows);
+  }, [onSelectionChange, table, selectedRowSelection]);
+
+  useEffect(() => {
+    if (clearSelectionSignal === undefined) {
+      return;
+    }
+
+    setRowSelection({});
+  }, [clearSelectionSignal]);
 
   const roleFilter =
     (table.getColumn('role')?.getFilterValue() as string) ?? '';
@@ -268,8 +296,10 @@ export function DataTable<TData, TValue>({
               variant="destructive"
               size="sm"
               className="w-full sm:w-auto"
+              onClick={() => onBulkDelete?.()}
+              disabled={isBulkDeleting}
             >
-              Delete Selected
+              {isBulkDeleting ? 'Deleting...' : 'Delete Selected'}
             </Button>
           </div>
         )}

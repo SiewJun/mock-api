@@ -60,22 +60,28 @@ export function EditUser() {
             <div className="flex flex-col items-center gap-4 text-center">
               <div>
                 <p className="text-destructive font-semibold">
-                  Failed to load user
+                  {error?.response?.status === 404
+                    ? 'User not found'
+                    : 'Failed to load user'}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {error?.response?.data?.message ||
-                    error?.message ||
-                    'An unexpected error occurred while fetching the user details.'}
+                  {error?.response?.status === 404
+                    ? 'This user may have been deleted or the ID is invalid.'
+                    : error?.response?.data?.message ||
+                      error?.message ||
+                      'An unexpected error occurred while fetching the user details.'}
                 </p>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-2">
                 <Button variant="outline" onClick={() => navigate('/')}>
                   Back to list
                 </Button>
-                <Button onClick={() => refetch()} disabled={isFetching}>
-                  <RefreshCcw className="mr-2 h-4 w-4" />
-                  Try again
-                </Button>
+                {error?.response?.status !== 404 && (
+                  <Button onClick={() => refetch()} disabled={isFetching}>
+                    <RefreshCcw className="mr-2 h-4 w-4" />
+                    Try again
+                  </Button>
+                )}
               </div>
             </div>
           )}

@@ -38,3 +38,7 @@ export async function updateUser({ id, data }: { id: string; data: UserFormData 
 
   return validatedData;
 }
+
+export async function deleteUser(id: string): Promise<void> {
+  await mockApiClient.delete(USERS_ENDPOINTS.delete(id));
+}
