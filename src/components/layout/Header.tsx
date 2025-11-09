@@ -32,7 +32,7 @@ export function Header({ title, description, actions }: HeaderProps) {
         <>
           <Separator />
           <div className="container mx-auto px-6 py-6">
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div className="space-y-1">
                 {title && (
                   <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
@@ -41,7 +41,11 @@ export function Header({ title, description, actions }: HeaderProps) {
                   <p className="text-muted-foreground">{description}</p>
                 )}
               </div>
-              {actions && <div className="flex items-center gap-2">{actions}</div>}
+              {actions && (
+                <div className="flex items-center gap-2 justify-end md:justify-start">
+                  {actions}
+                </div>
+              )}
             </div>
           </div>
         </>
