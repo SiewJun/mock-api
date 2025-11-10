@@ -52,6 +52,7 @@ npm install
 3. **Set up environment variables**
 
 Create a `.env` file in the root directory:
+
 **Note:** These environment variables are provided for assessment evaluation purposes. 
 ```env
 VITE_API_BASE_URL=https://68ff8c08e02b16d1753e6ed3.mockapi.io/maia/api/v1
