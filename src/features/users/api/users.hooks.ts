@@ -53,19 +53,56 @@ export function useCreateUser(
     UserFormData,
     { previousUsers: User[] | undefined; toastId: string | number }
   >({
-    mutationFn: createUser,
+    mutationFn: async (newUser) => {
+      const result = await createUser(newUser);
+      
+      if (result.avatarUploadPromise) {
+        result.avatarUploadPromise
+          .then((avatarUrl) => {
+            queryClient.setQueryData<User[]>(usersKeys.list(), (old = []) =>
+              old.map((user) =>
+                user.id === result.user.id
+                  ? { ...user, avatar: avatarUrl }
+                  : user
+              )
+            );
+            queryClient.setQueryData<User>(
+              usersKeys.detail(result.user.id),
+              (old) => (old ? { ...old, avatar: avatarUrl } : old)
+            );
+          })
+          .catch((error) => {
+            const errorMessage = error.message || '';
+            const isUploadError = errorMessage.includes('upload') || errorMessage.includes('Cloudinary');
+            
+            toast.error('Avatar upload failed', {
+              description: isUploadError 
+                ? 'The user was created but the avatar could not be uploaded. You can edit the user to try again.'
+                : errorMessage,
+            });
+          });
+      }
+      
+      return result.localPreviewUrl 
+        ? { ...result.user, avatar: result.localPreviewUrl }
+        : result.user;
+    },
     onMutate: async (newUser) => {
       const toastId = toast.loading('Creating user...');
       await queryClient.cancelQueries({ queryKey: usersKeys.list() });
 
       const previousUsers = queryClient.getQueryData<User[]>(usersKeys.list());
 
+      const avatarPreview = newUser.avatarFile 
+        ? URL.createObjectURL(newUser.avatarFile)
+        : newUser.avatar;
+
       queryClient.setQueryData<User[]>(usersKeys.list(), (old = []) => {
         const tempUser: User = {
           ...newUser,
           id: `temp-${Date.now()}`,
           createdAt: new Date().toISOString(),
-          avatar: newUser.avatar || '',
+          avatar: avatarPreview || '',
           bio: newUser.bio || '',
         };
         return [tempUser, ...old];
@@ -77,11 +114,16 @@ export function useCreateUser(
       if (context?.previousUsers) {
         queryClient.setQueryData(usersKeys.list(), context.previousUsers);
       }
+      
+      const errorMessage = error.message || 'An error occurred';
+      const isUploadError = errorMessage.includes('upload') || errorMessage.includes('Cloudinary');
+      
       const description =
         error.response?.data?.message ||
-        error.message ||
+        errorMessage ||
         'An error occurred while creating the user';
-      toast.error('Failed to create user', {
+      
+      toast.error(isUploadError ? 'Failed to upload image' : 'Failed to create user', {
         description,
         id: context?.toastId,
       });
@@ -163,7 +205,38 @@ export function useUpdateUser(
       toastId: string | number;
     }
   >({
-    mutationFn: updateUser,
+    mutationFn: async ({ id, data }) => {
+      const result = await updateUser({ id, data });
+      
+      if (result.avatarUploadPromise) {
+        result.avatarUploadPromise
+          .then((avatarUrl) => {
+            queryClient.setQueryData<User[]>(usersKeys.list(), (old = []) =>
+              old.map((user) =>
+                user.id === id ? { ...user, avatar: avatarUrl } : user
+              )
+            );
+            queryClient.setQueryData<User>(
+              usersKeys.detail(id),
+              (old) => (old ? { ...old, avatar: avatarUrl } : old)
+            );
+          })
+          .catch((error) => {
+            const errorMessage = error.message || '';
+            const isUploadError = errorMessage.includes('upload') || errorMessage.includes('Cloudinary');
+            
+            toast.error('Avatar upload failed', {
+              description: isUploadError 
+                ? 'The user was updated but the avatar could not be uploaded. You can edit the user to try again.'
+                : errorMessage,
+            });
+          });
+      }
+      
+      return result.localPreviewUrl 
+        ? { ...result.user, avatar: result.localPreviewUrl }
+        : result.user;
+    },
     onMutate: async ({ id, data }) => {
       const toastId = toast.loading('Saving changes...');
       await Promise.all([
@@ -174,12 +247,17 @@ export function useUpdateUser(
       const previousUsers = queryClient.getQueryData<User[]>(usersKeys.list());
       const previousUser = queryClient.getQueryData<User>(usersKeys.detail(id));
 
+      const avatarPreview = data.avatarFile 
+        ? URL.createObjectURL(data.avatarFile)
+        : data.avatar;
+
       queryClient.setQueryData<User[]>(usersKeys.list(), (old = []) =>
         old.map((user) =>
           user.id === id
             ? {
                 ...user,
                 ...data,
+                avatar: avatarPreview || user.avatar,
               }
             : user
         )
@@ -190,6 +268,7 @@ export function useUpdateUser(
           ? {
               ...old,
               ...data,
+              avatar: avatarPreview || old.avatar,
             }
           : old
       );
@@ -209,14 +288,17 @@ export function useUpdateUser(
       }
 
       const isNotFound = error.response?.status === 404;
+      const errorMessage = error.message || '';
+      const isUploadError = errorMessage.includes('upload') || errorMessage.includes('Cloudinary');
+      
       const description =
         error.response?.data?.message ||
         (isNotFound
           ? 'The user you are trying to edit was removed.'
-          : error.message || 'An error occurred while updating the user');
+          : errorMessage || 'An error occurred while updating the user');
 
       toast.error(
-        isNotFound ? 'User no longer exists' : 'Failed to update user',
+        isNotFound ? 'User no longer exists' : isUploadError ? 'Failed to upload image' : 'Failed to update user',
         {
           description,
           id: context?.toastId,

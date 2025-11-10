@@ -18,6 +18,7 @@ export const userFormSchema = z.object({
   phoneNumber: z.string().min(1, 'Phone number is required').trim(),
   active: z.boolean('status is required'),
   avatar: z.url('Invalid avatar URL').optional().or(z.literal('')),
+  avatarFile: z.instanceof(File).optional(),
   role: z.enum(['Admin', 'User', 'Guest'], {
     message: 'Role is required',
   }),

@@ -1,8 +1,8 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Upload, X, Image as ImageIcon } from 'lucide-react';
 import { isAxiosError } from 'axios';
 import {
   userFormSchema,
@@ -29,6 +29,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 type UserFormMode = 'create' | 'edit';
 
@@ -49,6 +50,9 @@ export function UserForm({ mode, initialData, userId }: UserFormProps) {
   const navigate = useNavigate();
   const createUserMutation = useCreateUser();
   const updateUserMutation = useUpdateUser();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const defaultValues = useMemo<UserFormData>(() => {
     if (mode === 'edit' && initialData) {
@@ -80,6 +84,7 @@ export function UserForm({ mode, initialData, userId }: UserFormProps) {
     formState: { errors, isSubmitting },
     control,
     reset,
+    setValue,
   } = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
     defaultValues,
@@ -87,11 +92,67 @@ export function UserForm({ mode, initialData, userId }: UserFormProps) {
 
   useEffect(() => {
     reset(defaultValues);
+    if (defaultValues.avatar) {
+      setAvatarPreview(defaultValues.avatar);
+    } else {
+      setAvatarPreview(null);
+    }
+    setSelectedFile(null);
   }, [defaultValues, reset]);
 
   const isMutating =
     createUserMutation.isPending || updateUserMutation.isPending;
   const isFormSubmitting = isSubmitting || isMutating;
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      alert('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
+      return;
+    }
+
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert('File size must be less than 10MB');
+      return;
+    }
+
+    setSelectedFile(file);
+    setValue('avatarFile', file);
+
+    setValue('avatar', '');
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAvatar = () => {
+    setSelectedFile(null);
+    setAvatarPreview(null);
+    setValue('avatarFile', undefined);
+    setValue('avatar', '');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleAvatarUrlChange = (url: string) => {
+    if (url) {
+      setAvatarPreview(url);
+      setSelectedFile(null);
+      setValue('avatarFile', undefined);
+    } else {
+      if (!selectedFile) {
+        setAvatarPreview(null);
+      }
+    }
+  };
 
   const onSubmit = async (data: UserFormData) => {
     navigate('/');
@@ -106,7 +167,6 @@ export function UserForm({ mode, initialData, userId }: UserFormProps) {
       } else if (userId) {
         await updateUserMutation.mutateAsync({ id: userId, data });
       }
-      navigate('/');
     } catch (error) {
       if (
         mode === 'edit' &&
@@ -247,20 +307,93 @@ export function UserForm({ mode, initialData, userId }: UserFormProps) {
         <Separator />
 
         <Field>
-          <FieldLabel htmlFor="avatar">Avatar URL</FieldLabel>
+          <FieldLabel>Avatar</FieldLabel>
           <FieldContent>
-            <Input
-              id="avatar"
-              type="url"
-              placeholder="https://example.com/avatar.jpg"
-              {...register('avatar')}
-              disabled={isFormSubmitting}
-              aria-invalid={!!errors.avatar}
-            />
-            <FieldDescription>
-              Optional: Provide a URL to the user's avatar image
-            </FieldDescription>
-            <FieldError errors={[errors.avatar]} />
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage
+                    src={avatarPreview || undefined}
+                    alt="User avatar"
+                  />
+                  <AvatarFallback>
+                    <ImageIcon className="h-8 w-8" />
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="flex-1 space-y-2">
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isFormSubmitting}
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Image
+                    </Button>
+
+                    {(avatarPreview || selectedFile) && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRemoveAvatar}
+                        disabled={isFormSubmitting}
+                      >
+                        <X className="mr-2 h-4 w-4" />
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    disabled={isFormSubmitting}
+                  />
+
+                  {selectedFile && (
+                    <p className="text-sm text-muted-foreground">
+                      Selected: {selectedFile.name} (
+                      {(selectedFile.size / 1024).toFixed(2)} KB)
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Or Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or use URL
+                  </span>
+                </div>
+              </div>
+
+              <Input
+                id="avatar"
+                type="url"
+                placeholder="https://example.com/avatar.jpg"
+                {...register('avatar', {
+                  onChange: (e) => handleAvatarUrlChange(e.target.value),
+                })}
+                disabled={isFormSubmitting || !!selectedFile}
+                aria-invalid={!!errors.avatar}
+              />
+
+              <FieldDescription>
+                Optional: Upload an image file (max 10MB) or provide a URL.
+              </FieldDescription>
+              <FieldError errors={[errors.avatar]} />
+            </div>
           </FieldContent>
         </Field>
 
@@ -276,9 +409,7 @@ export function UserForm({ mode, initialData, userId }: UserFormProps) {
               disabled={isFormSubmitting}
               aria-invalid={!!errors.bio}
             />
-            <FieldDescription>
-              Optional: 500 characters max
-            </FieldDescription>
+            <FieldDescription>Optional: 500 characters max</FieldDescription>
             <FieldError errors={[errors.bio]} />
           </FieldContent>
         </Field>
